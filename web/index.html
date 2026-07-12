@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terra Divisio — Province Partition Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#111820;
+    --ink-2:#0b1015;
+    --panel:#1a2430;
+    --panel-2:#212d3b;
+    --line:#33465a;
+    --line-soft:#26333f;
+    --parchment:#e9dfc7;
+    --parchment-dim:#a9a189;
+    --brass:#c19a49;
+    --brass-bright:#e2b969;
+    --wax:#b1503a;
+    --teal:#5c9d90;
+    --radius:3px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--ink);
+    color:var(--parchment);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+  }
+
+  body{
+    background-image:
+      repeating-linear-gradient(0deg, rgba(193,154,73,0.035) 0px, rgba(193,154,73,0.035) 1px, transparent 1px, transparent 40px),
+      repeating-linear-gradient(90deg, rgba(193,154,73,0.035) 0px, rgba(193,154,73,0.035) 1px, transparent 1px, transparent 40px);
+  }
+
+  a{ color:var(--brass-bright); }
+
+  /* ---------- header ---------- */
+
+  header{
+    padding:36px 28px 24px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+
+  header::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 50% -40%, rgba(193,154,73,0.14), transparent 60%);
+    pointer-events:none;
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.32em;
+    text-transform:uppercase;
+    color:var(--teal);
+    margin:0 0 10px;
+  }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(28px, 5vw, 44px);
+    letter-spacing:0.01em;
+    margin:0 0 8px;
+    color:var(--parchment);
+  }
+
+  header p.sub{
+    margin:0;
+    color:var(--parchment-dim);
+    font-size:14px;
+    max-width:560px;
+    margin-inline:auto;
+    line-height:1.6;
+  }
+
+  /* ---------- layout ---------- */
+
+  .workspace{
+    display:grid;
+    grid-template-columns:320px 1fr;
+    gap:0;
+    max-width:1400px;
+    margin:0 auto;
+  }
+
+  @media (max-width: 900px){
+    .workspace{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- sidebar ---------- */
+
+  aside{
+    border-right:1px solid var(--line);
+    padding:28px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+
+  @media (max-width: 900px){
+    aside{ border-right:none; border-bottom:1px solid var(--line); }
+  }
+
+  .section-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--brass);
+    margin:0 0 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .section-label::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+
+  /* dropzone */
+
+  .dropzone{
+    border:1px dashed var(--line);
+    border-radius:var(--radius);
+    padding:22px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+    background:var(--panel);
+  }
+
+  .dropzone:hover, .dropzone.drag{
+    border-color:var(--brass);
+    background:var(--panel-2);
+  }
+
+  .dropzone svg{ opacity:0.6; margin-bottom:8px; }
+
+  .dropzone .dz-title{
+    font-size:13px;
+    color:var(--parchment);
+    margin-bottom:4px;
+  }
+
+  .dropzone .dz-sub{
+    font-size:11px;
+    color:var(--parchment-dim);
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  #imageInput{ display:none; }
+
+  /* fields */
+
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-bottom:16px;
+  }
+
+  .field:last-child{ margin-bottom:0; }
+
+  .field label{
+    font-size:12px;
+    color:var(--parchment-dim);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  .field label .hint{
+    font-family:'JetBrains Mono', monospace;
+    color:var(--line);
+    font-size:10px;
+  }
+
+  input[type="number"]{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    color:var(--parchment);
+    padding:10px 12px;
+    border-radius:var(--radius);
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    width:100%;
+  }
+
+  input[type="number"]:focus-visible{
+    outline:2px solid var(--brass);
+    outline-offset:1px;
+    border-color:var(--brass);
+  }
+
+  button{
+    font-family:'Inter', sans-serif;
+    cursor:pointer;
+    border-radius:var(--radius);
+    border:1px solid transparent;
+    font-size:13px;
+    font-weight:500;
+    padding:12px 16px;
+    transition:transform .08s ease, background .15s ease, border-color .15s ease;
+  }
+
+  button:focus-visible{
+    outline:2px solid var(--brass-bright);
+    outline-offset:2px;
+  }
+
+  button:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+
+  .btn-primary{
+    background:var(--brass);
+    color:var(--ink-2);
+    width:100%;
+    font-weight:600;
+    letter-spacing:0.02em;
+  }
+
+  .btn-primary:hover:not(:disabled){ background:var(--brass-bright); }
+  .btn-primary:active:not(:disabled){ transform:translateY(1px); }
+
+  .btn-ghost{
+    background:transparent;
+    border-color:var(--line);
+    color:var(--parchment);
+    width:100%;
+  }
+
+  .btn-ghost:hover:not(:disabled){
+    border-color:var(--brass);
+    color:var(--brass-bright);
+  }
+
+  .btn-row{ display:flex; flex-direction:column; gap:8px; }
+
+  /* progress */
+
+  .progress-track{
+    height:6px;
+    width:100%;
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:99px;
+    overflow:hidden;
+    margin-top:14px;
+  }
+
+  #progressBar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--teal), var(--brass));
+    transition:width .12s ease;
+  }
+
+  .status-line{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--parchment-dim);
+    margin-top:10px;
+    line-height:1.5;
+    min-height:16px;
+  }
+
+  .status-line.warn{ color:var(--wax); }
+  .status-line.ok{ color:var(--teal); }
+
+  /* stat grid */
+
+  .stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .stat-box{
+    border:1px solid var(--line-soft);
+    border-radius:var(--radius);
+    padding:10px 12px;
+    background:var(--panel);
+  }
+
+  .stat-box .num{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    color:var(--parchment);
+    display:block;
+  }
+
+  .stat-box .lbl{
+    font-family:'JetBrains Mono', monospace;
+    font-size:9.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+  }
+
+  /* ---------- main / plates ---------- */
+
+  main{
+    padding:28px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+
+  .plates{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+
+  @media (max-width: 760px){
+    .plates{ grid-template-columns:1fr; }
+  }
+
+  .plate{
+    position:relative;
+    border:1px solid var(--line);
+    background:var(--panel);
+    border-radius:var(--radius);
+    padding:14px;
+  }
+
+  .plate-title{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+  }
+
+  .plate-title .roman{ color:var(--brass); }
+
+  .canvas-frame{
+    position:relative;
+    border:1px solid var(--line-soft);
+    background:
+      repeating-conic-gradient(#0e151b 0% 25%, #10181f 0% 50%) 50% / 16px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:220px;
+    overflow:hidden;
+  }
+
+  .canvas-frame canvas{
+    max-width:100%;
+    height:auto;
+    display:block;
+    image-rendering:pixelated;
+  }
+
+  .canvas-frame .empty-msg{
+    position:absolute;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--parchment-dim);
+    text-align:center;
+    padding:0 20px;
+  }
+
+  /* corner brackets */
+  .canvas-frame::before, .canvas-frame::after,
+  .plate .bracket-tl, .plate .bracket-br{
+    content:"";
+    position:absolute;
+    width:14px;
+    height:14px;
+    pointer-events:none;
+  }
+
+  .canvas-frame::before{
+    top:-1px; left:-1px;
+    border-top:2px solid var(--brass);
+    border-left:2px solid var(--brass);
+  }
+
+  .canvas-frame::after{
+    bottom:-1px; right:-1px;
+    border-bottom:2px solid var(--brass);
+    border-right:2px solid var(--brass);
+  }
+
+  /* ---------- manifest ---------- */
+
+  .manifest-panel{
+    border:1px solid var(--line);
+    background:var(--panel);
+    border-radius:var(--radius);
+    padding:18px 20px 20px;
+  }
+
+  .manifest-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:12px;
+  }
+
+  .manifest-head h2{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    font-weight:600;
+    margin:0;
+    color:var(--parchment);
+  }
+
+  .manifest-head .sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--parchment-dim);
+  }
+
+  #paletteStrip{
+    width:100%;
+    height:14px;
+    display:block;
+    border:1px solid var(--line-soft);
+    border-radius:2px;
+    margin-bottom:12px;
+  }
+
+  #rgbOutput{
+    width:100%;
+    height:180px;
+    resize:vertical;
+    background:var(--ink-2);
+    border:1px solid var(--line-soft);
+    color:var(--teal);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    line-height:1.6;
+    padding:12px 14px;
+    border-radius:var(--radius);
+  }
+
+  #rgbOutput:focus-visible{
+    outline:2px solid var(--brass);
+  }
+
+  footer{
+    text-align:center;
+    padding:24px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    color:var(--line);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Cartography Utility — No. 3</p>
+  <h1>Terra Divisio</h1>
+  <p class="sub">Load a nation bitmap, and this engine will survey each landmass and partition it into provinces of your choosing — every fragment still holding the shape of the whole. Black is read as open water and left untouched.</p>
+</header>
+
+<div class="workspace">
+
+  <aside>
+
+    <div>
+      <p class="section-label">Source Plate</p>
+      <label class="dropzone" id="dropzone" for="imageInput">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c19a49" stroke-width="1.4"><path d="M4 16.5V6a2 2 0 0 1 2-2h9l5 5v7.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 4v5h5"/><circle cx="9" cy="12" r="1.6"/><path d="M20 15l-4.5-4.5L7 19"/></svg>
+        <div class="dz-title">Drop bitmap, or click to browse</div>
+        <div class="dz-sub">PNG · flat-colour nations · black = water</div>
+      </label>
+      <input type="file" id="imageInput" accept="image/*">
+    </div>
+
+    <div>
+      <p class="section-label">Survey Parameters</p>
+      <div class="field">
+        <label for="provinceCount">Total provinces <span class="hint">across all nations</span></label>
+        <input type="number" id="provinceCount" value="40" min="1">
+      </div>
+      <div class="field">
+        <label for="seedInput">Random seed <span class="hint">repeatable maps</span></label>
+        <input type="number" id="seedInput" value="12345">
+      </div>
+      <button class="btn-primary" id="generateButton" disabled>Generate Provinces</button>
+      <div class="progress-track"><div id="progressBar"></div></div>
+      <p class="status-line" id="statusLine">Awaiting a source bitmap.</p>
+    </div>
+
+    <div id="statsWrap" style="display:none;">
+      <p class="section-label">Detected</p>
+      <div class="stats">
+        <div class="stat-box"><span class="num" id="statNations">—</span><span class="lbl">Nations</span></div>
+        <div class="stat-box"><span class="num" id="statLand">—</span><span class="lbl">Land px</span></div>
+        <div class="stat-box"><span class="num" id="statSize">—</span><span class="lbl">Dimensions</span></div>
+        <div class="stat-box"><span class="num" id="statProvinces">—</span><span class="lbl">Provinces</span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="section-label">Export</p>
+      <div class="btn-row">
+        <button class="btn-ghost" id="downloadImage" disabled>Download Province Map (.png)</button>
+        <button class="btn-ghost" id="downloadRGB" disabled>Download Colour Manifest (.txt)</button>
+      </div>
+    </div>
+
+  </aside>
+
+  <main>
+
+    <div class="plates">
+      <div class="plate">
+        <p class="plate-title"><span class="roman">Plate I</span><span>Source — Nations</span></p>
+        <div class="canvas-frame" id="frameOriginal">
+          <span class="empty-msg" id="msgOriginal">No bitmap loaded yet</span>
+          <canvas id="originalCanvas"></canvas>
+        </div>
+      </div>
+      <div class="plate">
+        <p class="plate-title"><span class="roman">Plate II</span><span>Generated — Provinces</span></p>
+        <div class="canvas-frame" id="frameGenerated">
+          <span class="empty-msg" id="msgGenerated">Nothing generated yet</span>
+          <canvas id="generatedCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="manifest-panel">
+      <div class="manifest-head">
+        <h2>Colour Manifest</h2>
+        <span class="sub" id="manifestCount">0 entries</span>
+      </div>
+      <canvas id="paletteStrip"></canvas>
+      <textarea id="rgbOutput" readonly placeholder="R G B&#10;R G B&#10;R G B&#10;…generated colours will be listed here after you run the engine."></textarea>
+    </div>
+
+  </main>
+
+</div>
+
+<footer>TERRA DIVISIO · runs entirely in your browser · nothing is uploaded</footer>
+
+<script>
+"use strict";
+
+// ------------------------------
+// DOM REFERENCES
+// ------------------------------
+
+const imageInput        = document.getElementById("imageInput");
+const dropzone           = document.getElementById("dropzone");
+const generateButton    = document.getElementById("generateButton");
+const originalCanvas    = document.getElementById("originalCanvas");
+const generatedCanvas   = document.getElementById("generatedCanvas");
+const paletteStrip      = document.getElementById("paletteStrip");
+const rgbOutput         = document.getElementById("rgbOutput");
+const progressBar       = document.getElementById("progressBar");
+const provinceCountInput= document.getElementById("provinceCount");
+const seedInput         = document.getElementById("seedInput");
+const downloadImage     = document.getElementById("downloadImage");
+const downloadRGB       = document.getElementById("downloadRGB");
+const statusLine        = document.getElementById("statusLine");
+const msgOriginal       = document.getElementById("msgOriginal");
+const msgGenerated      = document.getElementById("msgGenerated");
+const statsWrap         = document.getElementById("statsWrap");
+const statNations       = document.getElementById("statNations");
+const statLand          = document.getElementById("statLand");
+const statSize          = document.getElementById("statSize");
+const statProvinces     = document.getElementById("statProvinces");
+const manifestCount     = document.getElementById("manifestCount");
+
+const originalCtx  = originalCanvas.getContext("2d");
+const generatedCtx = generatedCanvas.getContext("2d");
+const paletteCtx    = paletteStrip.getContext("2d");
+
+// ------------------------------
+// GLOBAL DATA
+// ------------------------------
+
+let imageWidth  = 0;
+let imageHeight = 0;
+let originalPixels = null;
+
+/*
+  nations: Map<"R,G,B", { color:[r,g,b], pixels:[{x,y,index}] }>
+*/
+let nations = new Map();
+
+let provinces = [];
+let generatedImageData = null;
+let nationTargets = new Map();
+
+// ------------------------------
+// UI HELPERS
+// ------------------------------
+
+function setStatus(msg, kind){
+  statusLine.textContent = msg;
+  statusLine.className = "status-line" + (kind ? " " + kind : "");
+}
+
+function setProgress(value){
+  progressBar.style.width = `${Math.max(0, Math.min(1, value)) * 100}%`;
+}
+
+function yieldToUI(){
+  return new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+}
+
+// ------------------------------
+// IMAGE LOADING
+// ------------------------------
+
+dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("drag"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag"));
+dropzone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropzone.classList.remove("drag");
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if(file){
+    imageInput.files = e.dataTransfer.files;
+    handleFile(file);
+  }
+});
+
+imageInput.addEventListener("change", () => {
+  const file = imageInput.files[0];
+  if(file) handleFile(file);
+});
+
+function handleFile(file){
+
+  const img = new Image();
+
+  img.onload = async function(){
+
+    imageWidth  = img.width;
+    imageHeight = img.height;
+
+    originalCanvas.width  = imageWidth;
+    originalCanvas.height = imageHeight;
+    generatedCanvas.width  = imageWidth;
+    generatedCanvas.height = imageHeight;
+
+    originalCtx.clearRect(0, 0, imageWidth, imageHeight);
+    originalCtx.drawImage(img, 0, 0);
+
+    msgOriginal.style.display = "none";
+    msgGenerated.style.display = "block";
+    msgGenerated.textContent = "Nothing generated yet";
+
+    generatedCtx.clearRect(0, 0, imageWidth, imageHeight);
+    generatedImageData = null;
+    rgbOutput.value = "";
+    manifestCount.textContent = "0 entries";
+    paletteCtx.clearRect(0,0,paletteStrip.width, paletteStrip.height);
+    downloadImage.disabled = true;
+    downloadRGB.disabled = true;
+
+    generateButton.disabled = true;
+    setStatus("Surveying bitmap…");
+    setProgress(0);
+
+    await scanImage();
+
+    generateButton.disabled = false;
+  };
+
+  img.onerror = function(){
+    setStatus("Could not read that file as an image.", "warn");
+  };
+
+  img.src = URL.createObjectURL(file);
+}
+
+// ------------------------------
+// PIXEL SCANNING (chunked, async)
+// ------------------------------
+
+async function scanImage(){
+
+  nations.clear();
+
+  const imageData = originalCtx.getImageData(0, 0, imageWidth, imageHeight);
+  originalPixels = imageData;
+
+  const data = imageData.data;
+  const totalPixels = imageWidth * imageHeight;
+  const CHUNK = 20000;
+
+  for(let i = 0; i < totalPixels; i++){
+
+    const offset = i * 4;
+    const r = data[offset];
+    const g = data[offset + 1];
+    const b = data[offset + 2];
+
+    // black = water
+    if(r === 0 && g === 0 && b === 0){
+      continue;
+    }
+
+    const key = `${r},${g},${b}`;
+
+    if(!nations.has(key)){
+      nations.set(key, { color:[r, g, b], pixels:[] });
+    }
+
+    nations.get(key).pixels.push({
+      x: i % imageWidth,
+      y: Math.floor(i / imageWidth),
+      index: i
+    });
+
+    if(i % CHUNK === 0){
+      setProgress(i / totalPixels);
+      await yieldToUI();
+    }
+  }
+
+  setProgress(1);
+
+  const landPixels = totalPixels - countWaterPixels(data, totalPixels);
+
+  statsWrap.style.display = "block";
+  statNations.textContent = nations.size;
+  statLand.textContent = landPixels.toLocaleString();
+  statSize.textContent = `${imageWidth}×${imageHeight}`;
+  statProvinces.textContent = "—";
+
+  if(nations.size === 0){
+    setStatus("No nations detected — is the whole image black?", "warn");
+    generateButton.disabled = true;
+  } else {
+    setStatus(`Detected ${nations.size} nation${nations.size === 1 ? "" : "s"}. Ready to generate.`, "ok");
+  }
+}
+
+function countWaterPixels(data, totalPixels){
+  let water = 0;
+  for(let i = 0; i < totalPixels; i++){
+    const o = i * 4;
+    if(data[o] === 0 && data[o+1] === 0 && data[o+2] === 0) water++;
+  }
+  return water;
+}
+
+// ------------------------------
+// SEEDED RANDOM NUMBER GENERATOR
+// ------------------------------
+
+let randomSeed = 12345;
+
+function setSeed(seed){
+  randomSeed = seed >>> 0;
+  if(randomSeed === 0) randomSeed = 1;
+}
+
+function random(){
+  randomSeed = (randomSeed * 9301 + 49297) % 233280;
+  return randomSeed / 233280;
+}
+
+// ------------------------------
+// PROVINCE GENERATION ENTRY POINT
+// ------------------------------
+
+generateButton.addEventListener("click", generateProvinces);
+
+async function generateProvinces(){
+
+  if(!originalPixels){
+    setStatus("Load an image first.", "warn");
+    return;
+  }
+
+  if(nations.size === 0){
+    setStatus("No land detected to partition.", "warn");
+    return;
+  }
+
+  const requested = Math.max(1, Math.floor(Number(provinceCountInput.value)) || 1);
+  const seedVal = Number(seedInput.value) || 0;
+
+  generateButton.disabled = true;
+  downloadImage.disabled = true;
+  downloadRGB.disabled = true;
+  setProgress(0);
+  setStatus("Partitioning nations into provinces…");
+
+  setSeed(seedVal);
+
+  provinces = [];
+  rgbOutput.value = "";
+
+  allocateProvinceTargets(requested);
+
+  await growAllNations();
+
+  createProvinceColours();
+
+  renderProvinceMap();
+
+  statProvinces.textContent = provinces.length;
+  manifestCount.textContent = `${provinces.length} ${provinces.length === 1 ? "entry" : "entries"}`;
+
+  msgGenerated.style.display = "none";
+
+  downloadImage.disabled = false;
+  downloadRGB.disabled = false;
+  generateButton.disabled = false;
+
+  setProgress(1);
+  setStatus(`Generated ${provinces.length} provinces across ${nations.size} nations.`, "ok");
+}
+
+// ------------------------------
+// ALLOCATE PROVINCE TARGETS PER NATION
+// ------------------------------
+
+function allocateProvinceTargets(total){
+
+  nationTargets.clear();
+
+  let land = 0;
+  for(const nation of nations.values()){
+    land += nation.pixels.length;
+  }
+
+  let assigned = 0;
+
+  for(const [key, nation] of nations){
+    let amount = Math.floor((nation.pixels.length / land) * total);
+    if(amount < 1) amount = 1;
+    if(amount > nation.pixels.length) amount = nation.pixels.length;
+    nationTargets.set(key, amount);
+    assigned += amount;
+  }
+
+  // trim excess provinces, largest allocations first, never below 1
+  while(assigned > total){
+    let reduced = false;
+    for(const key of nationTargets.keys()){
+      if(nationTargets.get(key) > 1){
+        nationTargets.set(key, nationTargets.get(key) - 1);
+        assigned--;
+        reduced = true;
+        if(assigned <= total) break;
+      }
+    }
+    if(!reduced) break; // safety valve: every nation already at its floor
+  }
+
+  // distribute any shortfall (rounding down can leave provinces unassigned)
+  const keys = [...nationTargets.keys()];
+  let k = 0;
+  while(assigned < total && keys.length){
+    const key = keys[k % keys.length];
+    const nation = nations.get(key);
+    if(nationTargets.get(key) < nation.pixels.length){
+      nationTargets.set(key, nationTargets.get(key) + 1);
+      assigned++;
+    }
+    k++;
+    if(k > keys.length * 4) break; // safety valve: no nation has room left
+  }
+}
+
+// ------------------------------
+// GROW ALL NATIONS (chunked, async)
+// ------------------------------
+
+async function growAllNations(){
+
+  let provinceID = 0;
+  let done = 0;
+  const totalNations = nations.size;
+
+  for(const [nationKey, nation] of nations){
+
+    const count = nationTargets.get(nationKey);
+
+    const result = await growNation(nation, count, provinceID);
+
+    provinces.push(...result);
+    provinceID += result.length;
+
+    done++;
+    setProgress(done / totalNations);
+    await yieldToUI();
+  }
+}
+
+// ------------------------------
+// SINGLE NATION GROWTH
+// Random flood-fill from `count` seeds, constrained to the
+// nation's own pixels, so the union of provinces reproduces
+// the original nation's exact silhouette.
+// ------------------------------
+
+async function growNation(nation, count, startID){
+
+  const pixels = nation.pixels;
+
+  const pixelSet = new Set();
+  for(const p of pixels) pixelSet.add(p.index);
+
+  const seeds = chooseSeeds(pixels, count);
+
+  const owner = new Map();
+  const created = [];
+  let frontier = [];
+
+  for(let i = 0; i < count; i++){
+    const seed = seeds[i];
+    const id = startID + i;
+
+    owner.set(seed.index, id);
+    frontier.push({ index: seed.index, province: id });
+    created.push({ id, pixels: [], colour: null });
+  }
+
+  const byId = new Map(created.map(p => [p.id, p]));
+
+  let steps = 0;
+
+  while(frontier.length){
+
+    // pick a random frontier cell (swap-remove keeps this O(1))
+    const pick = Math.floor(random() * frontier.length);
+    const last = frontier.length - 1;
+    const current = frontier[pick];
+    frontier[pick] = frontier[last];
+    frontier.pop();
+
+    const prov = byId.get(current.province);
+    prov.pixels.push(current.index);
+
+    const x = current.index % imageWidth;
+    const y = Math.floor(current.index / imageWidth);
+
+    const neighbours = getNeighbours(x, y);
+
+    for(const n of neighbours){
+      const idx = n.y * imageWidth + n.x;
+
+      if(!pixelSet.has(idx)) continue;
+      if(owner.has(idx)) continue;
+
+      owner.set(idx, current.province);
+      frontier.push({ index: idx, province: current.province });
+    }
+
+    steps++;
+    if(steps % 30000 === 0) await yieldToUI();
+  }
+
+  return created;
+}
+
+// ------------------------------
+// SEED PLACEMENT (uniform random, no repeats)
+// ------------------------------
+
+function chooseSeeds(pixels, amount){
+
+  const available = [...pixels];
+  const chosen = [];
+
+  for(let i = 0; i < amount && available.length; i++){
+    const index = Math.floor(random() * available.length);
+    const last = available.length - 1;
+    chosen.push(available[index]);
+    available[index] = available[last];
+    available.pop();
+  }
+
+  return chosen;
+}
+
+// ------------------------------
+// NEIGHBOURS
+// ------------------------------
+
+function getNeighbours(x, y){
+
+  const result = [];
+  const dirs = [[1,0], [-1,0], [0,1], [0,-1]];
+
+  for(const [dx, dy] of dirs){
+    const nx = x + dx;
+    const ny = y + dy;
+    if(nx >= 0 && ny >= 0 && nx < imageWidth && ny < imageHeight){
+      result.push({ x: nx, y: ny });
+    }
+  }
+
+  return result;
+}
+
+// ------------------------------
+// CREATE UNIQUE PROVINCE COLOURS
+// ------------------------------
+
+function createProvinceColours(){
+
+  const used = new Set();
+  let lines = "";
+
+  for(const province of provinces){
+
+    let colour;
+    let attempts = 0;
+
+    do {
+      colour = [
+        Math.floor(random() * 256),
+        Math.floor(random() * 256),
+        Math.floor(random() * 256)
+      ];
+      attempts++;
+    } while(used.has(colour.join(",")) && attempts < 5000);
+
+    used.add(colour.join(","));
+    province.colour = colour;
+
+    lines += `${colour[0]} ${colour[1]} ${colour[2]}\n`;
+  }
+
+  rgbOutput.value = lines;
+  drawPaletteStrip();
+}
+
+function drawPaletteStrip(){
+
+  const w = paletteStrip.clientWidth || 600;
+  paletteStrip.width = w;
+  paletteStrip.height = 14;
+
+  if(provinces.length === 0){
+    paletteCtx.clearRect(0, 0, w, 14);
+    return;
+  }
+
+  const swatchW = w / provinces.length;
+
+  provinces.forEach((p, i) => {
+    const [r, g, b] = p.colour;
+    paletteCtx.fillStyle = `rgb(${r},${g},${b})`;
+    paletteCtx.fillRect(Math.floor(i * swatchW), 0, Math.ceil(swatchW) + 1, 14);
+  });
+}
+
+// ------------------------------
+// RENDER GENERATED MAP
+// ------------------------------
+
+function renderProvinceMap(){
+
+  generatedImageData = generatedCtx.createImageData(imageWidth, imageHeight);
+  const data = generatedImageData.data;
+
+  // black background = water
+  for(let i = 0; i < data.length; i += 4){
+    data[i] = 0;
+    data[i+1] = 0;
+    data[i+2] = 0;
+    data[i+3] = 255;
+  }
+
+  for(const province of provinces){
+    const [r, g, b] = province.colour;
+    for(const index of province.pixels){
+      const offset = index * 4;
+      data[offset] = r;
+      data[offset+1] = g;
+      data[offset+2] = b;
+      data[offset+3] = 255;
+    }
+  }
+
+  generatedCtx.putImageData(generatedImageData, 0, 0);
+}
+
+// ------------------------------
+// DOWNLOADS
+// ------------------------------
+
+downloadImage.addEventListener("click", () => {
+  if(!generatedImageData){
+    setStatus("Generate a map first.", "warn");
+    return;
+  }
+  const link = document.createElement("a");
+  link.download = "province_map.png";
+  link.href = generatedCanvas.toDataURL("image/png");
+  link.click();
+});
+
+downloadRGB.addEventListener("click", () => {
+  if(rgbOutput.value.length === 0){
+    setStatus("Generate provinces first.", "warn");
+    return;
+  }
+  const blob = new Blob([rgbOutput.value], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "province_colors.txt";
+  link.click();
+});
+
+window.addEventListener("resize", drawPaletteStrip);
+
+</script>
+</body>
+</html>
