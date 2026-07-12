@@ -1,0 +1,3 @@
+[submodule "Basic-OpenGL"]
+	path = Basic-OpenGL
+	url = https://github.com/GpapPeaky/Basic-OpenGL.git
