@@ -10,11 +10,17 @@ namespace KENG {
         private:
             llui id                               = 0;
             std::string name                      = "PROV";
-            std::array<ui8, 3> color              = {255, 255, 255};
+            ui32 color                            = 0xffffff;
 
         public:
-            Province(llui id, std::string name, std::array<ui8, 3> color);
+            Province(llui id, std::string name, ui32 color);
             ~Province(void);
+
+            std::string& Name(void);
+    
+            llui Id(void) const ;
+
+            ui32 Color(void) const ;
     }; // Province class
     
 } // Kallergis engine namespace

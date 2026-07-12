@@ -121,7 +121,7 @@
 
 96 62 92    tribe                   "Boion"
 
-109 100 117 taribe                  "Enetezi"
+109 100 117 tribe                   "Enetezi"
 
 99 63 114   tribe                   "Glamore"
 
@@ -229,7 +229,7 @@
 
 193 159 36  celestial_empire        "Heavenly Kingdom"
 216 178 41  celestial_kingdom       "Guanxhi"
-324 193 44  celestial_kingdom       "Vitala"    
+224 193 44  celestial_kingdom       "Vitala"    
 
 76 69 34    horde                   "Khagaria"
 

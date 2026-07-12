@@ -1,6 +1,14 @@
-#include "../OGL.hpp"
+#include "auxf/includes.aux"
 
 int main(int, char**){
+    KENG::ProvinceRegistry pr;
+    pr.ReadProvinceFile();
+    // pr.Print();
+
+    KENG::RealmRegistry rr;
+    rr.ReadRealmFile();
+    rr.Print();
+
     /* Initialise SDL2 and OpenGL */
     SDL2_InitWin();
     OGL_InitContext(SDL2_Win);

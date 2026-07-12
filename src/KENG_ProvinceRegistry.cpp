@@ -1,7 +1,11 @@
 #include "KENG_ProvinceRegistry.hpp"
 
 namespace KENG {
-    void ProvinceRegistry::ReadProvinceFile(void) {
+    ProvinceRegistry::ProvinceRegistry(void) {}
+
+    ProvinceRegistry::~ProvinceRegistry(void) {}
+
+    void ProvinceRegistry::ReadProvinceFile() {
         // TODO:
     }
 
@@ -11,14 +15,20 @@ namespace KENG {
         auto it = colorToId.find(packedRGB); // Just need to find a number, not an entire array!
 
         if (it != colorToId.end()) {
-            return registry[it->second];
+            return provinces[it->second];
         }
 
-        static Province nullProvince{0, "nullprov", {0, 0, 0}}; // NULL
+        static Province nullProvince{0, "nullprov", 0xffffff}; // NULL
         return nullProvince;
     }
     
     Province& ProvinceRegistry::GetProvince(llui id) {
-        return registry[id];
+        return provinces[id];
+    }
+
+    void ProvinceRegistry::Print(void) {
+        for (auto prov : provinces) {
+            std::cout << prov.Id() << " " << prov.Name() << std::endl;
+        }
     }
 }

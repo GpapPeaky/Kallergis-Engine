@@ -5,12 +5,15 @@
 
 #include <vector>
 #include <unordered_map>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 namespace KENG {
     class ProvinceRegistry {
         private:
             std::unordered_map<ui32, llui> colorToId;
-            std::vector<Province> registry;
+            std::vector<Province> provinces;
         public:
             ProvinceRegistry(void);
             ~ProvinceRegistry(void);
@@ -20,5 +23,7 @@ namespace KENG {
             Province& GetProvince(std::array<ui8, 3> color);
             
             Province& GetProvince(llui id);
+
+            void Print(void); // Prints the generated entries, debug only.
     };
 }
