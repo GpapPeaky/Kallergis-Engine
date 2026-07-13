@@ -16,6 +16,8 @@ namespace KENG {
         public:
             void ReadRealmFile(void); 
 
+            void ReadOwnerFile(void);
+
             void Print(void); // Prints the generated entries, debug only.
     }; // Registry
 }

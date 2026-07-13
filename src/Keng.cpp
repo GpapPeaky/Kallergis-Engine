@@ -7,6 +7,7 @@ int main(int, char**){
 
     KENG::RealmRegistry rr;
     rr.ReadRealmFile();
+    rr.ReadOwnerFile();
     rr.Print();
 
     /* Initialise SDL2 and OpenGL */
@@ -35,15 +36,15 @@ int main(int, char**){
     OGL_Scene = OGL_CreateNode(rootObj, "root");
     
     /* Map creation */
-    OGL_Object* map = OGL_CreateObject(OGL_GetShader("tex"));
-    OGL_CreateTextureQuad(*map->mesh);
-    OGL_LoadBitmapToObject(*map->mesh, "History/provinces/min_province_map.png");
+    OGL_Object* provinceMap = OGL_CreateObject(OGL_GetShader("tex"));
+    OGL_CreateTextureQuad(*provinceMap->mesh);
+    OGL_LoadBitmapToObject(*provinceMap->mesh, "History/provinces/min_province_map.png");
     /* Create the object node */
-    OGL_ONode* onodeMap = OGL_CreateNode(map, "map");
-    TRS::S(*map, {10.0f * 2.035f, 10.f, 1.f});
-    TRS::R(*map, {0.f, 0.f, 180.f});
+    OGL_ONode* onodeProvinceMap = OGL_CreateNode(provinceMap, "map");
+    TRS::S(*provinceMap, {30.0f * 1.777778f, 30.f, 1.f});
+    TRS::R(*provinceMap, {0.f, 0.f, 180.f});
     /* Hierarchy */
-    OGL_AttachChild(OGL_Scene, onodeMap);
+    OGL_AttachChild(OGL_Scene, onodeProvinceMap);
 
     /* Main loop, and timing */
     Uint32 lastTime = SDL_GetTicks();

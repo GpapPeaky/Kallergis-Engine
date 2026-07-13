@@ -66,6 +66,10 @@ namespace KENG {
         }
     }
 
+    void RealmRegistry::ReadOwnerFile(void) {
+        // TODO:
+    }
+
     void RealmRegistry::Print(void) {
         for (Realm realm : realms) {
             std::cout << realm.Id() << " " << realm.Name() << " " << realm.Color() << " " << " " << std::endl;
