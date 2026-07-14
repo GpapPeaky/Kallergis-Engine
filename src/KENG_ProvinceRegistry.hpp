@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iomanip>          // std::quoted(...)
 
 namespace KENG {
     class ProvinceRegistry {

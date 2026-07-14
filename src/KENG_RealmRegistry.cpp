@@ -7,13 +7,12 @@ namespace KENG {
         std::ifstream inputFile(fpath);
     
         if (!inputFile.is_open()) {
-            std::cerr << "Failed to open realm data file: " << fpath << '\n';
+            Utils::LOG_RLM << "Failed to open realm data file: " << fpath << '\n';
             return;
         }
     
-        std::string line;
         llui id = 0;
-    
+        std::string line;
         while (std::getline(inputFile, line)) {
             // Skip empty lines
             if (line.empty())
@@ -27,7 +26,7 @@ namespace KENG {
     
             // Read RGB and realm type
             if (!(ss >> r >> g >> b >> realmType)) {
-                std::cerr << "Malformed line: " << line << '\n';
+                Utils::LOG_RLM << "Malformed line: " << line << '\n';
                 continue;
             }
     
@@ -47,7 +46,7 @@ namespace KENG {
                 g < 0 || g > 255 ||
                 b < 0 || b > 255)
             {
-                std::cerr << "Invalid RGB value: " << line << '\n';
+                Utils::LOG_RLM << "Invalid RGB value: " << line << '\n';
                 continue;
             }
     
@@ -72,7 +71,7 @@ namespace KENG {
 
     void RealmRegistry::Print(void) {
         for (Realm realm : realms) {
-            std::cout << realm.Id() << " " << realm.Name() << " " << realm.Color() << " " << " " << std::endl;
+            Utils::LOG_RLM << realm.Id() << " " << realm.Name() << " " << realm.Color() << " " << " " << std::endl;
         }
     }
 }

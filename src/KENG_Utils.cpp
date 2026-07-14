@@ -6,4 +6,7 @@ namespace KENG::Utils{
                (static_cast<ui32>(g) << 8)  | 
                 static_cast<ui32>(b);
     }
+
+    std::ofstream LOG_PROV = std::ofstream("logs/prov.log");
+    std::ofstream LOG_RLM = std::ofstream("logs/rlm.log");
 }
