@@ -38,7 +38,7 @@ int main(int, char**){
     /* Map creation */
     OGL_Object* provinceMap = OGL_CreateObject(OGL_GetShader("tex"));
     OGL_CreateTextureQuad(*provinceMap->mesh);
-    OGL_LoadBitmapToObject(*provinceMap->mesh, "History/provinces/min_province_map.png");
+    OGL_LoadBitmapToObject(*provinceMap->mesh, "History/provinces/province_map.png");
     /* Create the object node */
     OGL_ONode* onodeProvinceMap = OGL_CreateNode(provinceMap, "map");
     TRS::S(*provinceMap, {30.0f * 1.777778f, 30.f, 1.f});

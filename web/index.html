@@ -510,6 +510,10 @@
         <label for="seedInput">Random seed <span class="hint">repeatable maps</span></label>
         <input type="number" id="seedInput" value="12345">
       </div>
+      <div class="field">
+        <label for="minSizeInput">Minimum province size <span class="hint">px, 1 = off</span></label>
+        <input type="number" id="minSizeInput" value="1" min="1">
+      </div>
       <button class="btn-primary" id="generateButton" disabled>Generate Provinces</button>
       <div class="progress-track"><div id="progressBar"></div></div>
       <p class="status-line" id="statusLine">Awaiting a source bitmap.</p>
@@ -561,7 +565,7 @@
         <span class="sub" id="manifestCount">0 entries</span>
       </div>
       <canvas id="paletteStrip"></canvas>
-      <textarea id="rgbOutput" readonly placeholder="R G B&#10;R G B&#10;R G B&#10;…generated colours will be listed here after you run the engine."></textarea>
+      <textarea id="rgbOutput" readonly placeholder="SRC: R G B  PROV: R G B&#10;SRC: R G B  PROV: R G B&#10;SRC: R G B  PROV: R G B&#10;…generated colours will be listed here after you run the engine."></textarea>
     </div>
 
   </main>
@@ -587,6 +591,7 @@ const rgbOutput         = document.getElementById("rgbOutput");
 const progressBar       = document.getElementById("progressBar");
 const provinceCountInput= document.getElementById("provinceCount");
 const seedInput         = document.getElementById("seedInput");
+const minSizeInput      = document.getElementById("minSizeInput");
 const downloadImage     = document.getElementById("downloadImage");
 const downloadRGB       = document.getElementById("downloadRGB");
 const statusLine        = document.getElementById("statusLine");
@@ -627,6 +632,12 @@ let nationTargets = new Map();
 // or the flood-fill can never reach it.
 // Entry: { id, nationKey, pixels:[{x,y,index}] }
 let landmasses = [];
+
+// Global, monotonically-increasing province id counter. Using a single
+// shared counter (rather than reserving an id range per landmass) keeps
+// ids unique even after small provinces get merged away and a landmass
+// ends up producing fewer provinces than it was allocated.
+let globalProvinceID = 0;
 
 // ------------------------------
 // UI HELPERS
@@ -886,6 +897,7 @@ async function generateProvinces(){
 
   const requested = Math.max(1, Math.floor(Number(provinceCountInput.value)) || 1);
   const seedVal = Number(seedInput.value) || 0;
+  const minSize = Math.max(1, Math.floor(Number(minSizeInput.value)) || 1);
 
   generateButton.disabled = true;
   downloadImage.disabled = true;
@@ -896,11 +908,12 @@ async function generateProvinces(){
   setSeed(seedVal);
 
   provinces = [];
+  globalProvinceID = 0;
   rgbOutput.value = "";
 
   allocateProvinceTargets(requested);
 
-  await growAllLandmasses();
+  await growAllLandmasses(minSize);
 
   createProvinceColours();
 
@@ -980,9 +993,8 @@ function allocateProvinceTargets(total){
 // GROW ALL NATIONS (chunked, async)
 // ------------------------------
 
-async function growAllLandmasses(){
+async function growAllLandmasses(minSize){
 
-  let provinceID = 0;
   let done = 0;
   const totalLandmasses = landmasses.length;
 
@@ -990,10 +1002,9 @@ async function growAllLandmasses(){
 
     const count = nationTargets.get(lm.id);
 
-    const result = await growLandmass(lm, count, provinceID);
+    const result = await growLandmass(lm, count, minSize);
 
     provinces.push(...result);
-    provinceID += result.length;
 
     done++;
     setProgress(done / totalLandmasses);
@@ -1002,13 +1013,15 @@ async function growAllLandmasses(){
 }
 
 // ------------------------------
-// SINGLE NATION GROWTH
-// Random flood-fill from `count` seeds, constrained to the
-// nation's own pixels, so the union of provinces reproduces
-// the original nation's exact silhouette.
+// SINGLE LANDMASS GROWTH
+// Random flood-fill from `count` seeds, constrained to this
+// landmass's own pixels, so the union of provinces reproduces
+// its exact silhouette. Provinces smaller than `minSize` are
+// then merged into a neighbouring province from the same
+// landmass, so no undersized fragments are left in the output.
 // ------------------------------
 
-async function growLandmass(landmass, count, startID){
+async function growLandmass(landmass, count, minSize){
 
   const pixels = landmass.pixels;
 
@@ -1023,11 +1036,11 @@ async function growLandmass(landmass, count, startID){
 
   for(let i = 0; i < count; i++){
     const seed = seeds[i];
-    const id = startID + i;
+    const id = globalProvinceID++;
 
     owner.set(seed.index, id);
     frontier.push({ index: seed.index, province: id });
-    created.push({ id, pixels: [], colour: null });
+    created.push({ id, pixels: [], colour: null, nationKey: landmass.nationKey });
   }
 
   const byId = new Map(created.map(p => [p.id, p]));
@@ -1065,7 +1078,103 @@ async function growLandmass(landmass, count, startID){
     if(steps % 30000 === 0) await yieldToUI();
   }
 
+  if(minSize > 1){
+    await mergeSmallProvinces(created, owner, minSize);
+  }
+
   return created;
+}
+
+// ------------------------------
+// MERGE UNDERSIZED PROVINCES
+// Repeatedly folds the smallest province below `minSize` into
+// its largest bordering neighbour (within the same landmass —
+// merging never crosses a nation boundary), until every
+// remaining province meets the threshold or only one is left.
+// Mutates `created` in place by removing merged-away entries.
+// ------------------------------
+
+async function mergeSmallProvinces(created, owner, minSize){
+
+  if(created.length <= 1) return;
+
+  const byId = new Map(created.map(p => [p.id, p]));
+
+  // build adjacency: province id -> Set of neighbouring province ids
+  const adjacency = new Map();
+  for(const p of created) adjacency.set(p.id, new Set());
+
+  let steps = 0;
+
+  for(const p of created){
+    for(const idx of p.pixels){
+      const x = idx % imageWidth;
+      const y = Math.floor(idx / imageWidth);
+      for(const n of getNeighbours(x, y)){
+        const nidx = n.y * imageWidth + n.x;
+        const ownerId = owner.get(nidx);
+        if(ownerId !== undefined && ownerId !== p.id){
+          adjacency.get(p.id).add(ownerId);
+        }
+      }
+      steps++;
+      if(steps % 30000 === 0) await yieldToUI();
+    }
+  }
+  // adjacency should already be symmetric (each side sees the other
+  // across the shared border), but enforce it defensively
+  for(const [id, neighbours] of adjacency){
+    for(const nb of neighbours){
+      if(adjacency.has(nb)) adjacency.get(nb).add(id);
+    }
+  }
+
+  let merges = 0;
+
+  while(byId.size > 1){
+
+    // find the smallest province currently below threshold
+    let smallest = null;
+    for(const p of byId.values()){
+      if(p.pixels.length < minSize && (!smallest || p.pixels.length < smallest.pixels.length)){
+        smallest = p;
+      }
+    }
+    if(!smallest) break; // nothing left below threshold
+
+    const neighbours = adjacency.get(smallest.id);
+    if(!neighbours || neighbours.size === 0) break; // isolated fragment, nothing to merge into
+
+    // merge into the largest bordering neighbour
+    let target = null;
+    for(const nid of neighbours){
+      const np = byId.get(nid);
+      if(np && (!target || np.pixels.length > target.pixels.length)) target = np;
+    }
+    if(!target) break;
+
+    for(const idx of smallest.pixels) owner.set(idx, target.id);
+    target.pixels.push(...smallest.pixels);
+
+    for(const nid of adjacency.get(smallest.id)){
+      if(nid === target.id) continue;
+      adjacency.get(target.id).add(nid);
+      if(adjacency.has(nid)){
+        adjacency.get(nid).delete(smallest.id);
+        adjacency.get(nid).add(target.id);
+      }
+    }
+    adjacency.get(target.id).delete(smallest.id);
+    adjacency.delete(smallest.id);
+    byId.delete(smallest.id);
+
+    merges++;
+    if(merges % 500 === 0) await yieldToUI();
+  }
+
+  // reflect surviving provinces back into `created`
+  created.length = 0;
+  created.push(...byId.values());
 }
 
 // ------------------------------
@@ -1134,7 +1243,9 @@ function createProvinceColours(){
     used.add(colour.join(","));
     province.colour = colour;
 
-    lines += `${colour[0]} ${colour[1]} ${colour[2]}\n`;
+    const [sr, sg, sb] = province.nationKey.split(",");
+
+    lines += `SRC: ${sr} ${sg} ${sb}  PROV: ${colour[0]} ${colour[1]} ${colour[2]}\n`;
   }
 
   rgbOutput.value = lines;
