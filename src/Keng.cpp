@@ -75,10 +75,10 @@ int main(int, char**){
         
         /* Updates */
 
-        std::string provName = "nullprov";
-        if ((provName = provCtrl.GetHoveredProvince(pr, onodeProvinceMap->o->mat.texture).Name()) != "nullprov") {
-            std::cout << provName << "\n";
-        }
+        // std::string provName = "nullprov";
+        // if ((provName = provCtrl.GetHoveredProvince(pr, onodeProvinceMap->o->mat.texture).Name()) != "nullprov") {
+            // std::cout << provName << "\n";
+        // }
 
         OGL_SetScreenBackground(0.f, 0.f, 0.f, 1.f);
 
