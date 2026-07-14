@@ -1,15 +1,6 @@
 #include "auxf/includes.aux"
 
 int main(int, char**){
-    KENG::ProvinceRegistry pr;
-    pr.ReadProvinceFile();
-    pr.Print();
-
-    KENG::RealmRegistry rr;
-    rr.ReadRealmFile();
-    rr.ReadOwnerFile();
-    rr.Print();
-
     /* Initialise SDL2 and OpenGL */
     SDL2_InitWin();
     OGL_InitContext(SDL2_Win);
@@ -38,13 +29,31 @@ int main(int, char**){
     /* Map creation */
     OGL_Object* provinceMap = OGL_CreateObject(OGL_GetShader("tex"));
     OGL_CreateTextureQuad(*provinceMap->mesh);
-    OGL_LoadBitmapToObject(*provinceMap->mesh, "History/provinces/province_map.png");
+    OGL_LoadBitmapToObject(*provinceMap, "History/provinces/province_map.png");
     /* Create the object node */
     OGL_ONode* onodeProvinceMap = OGL_CreateNode(provinceMap, "map");
     TRS::S(*provinceMap, {30.0f * 1.777778f, 30.f, 1.f});
     TRS::R(*provinceMap, {0.f, 0.f, 180.f});
+
+    KENG::ProvinceRegistry pr;
+    pr.ReadProvinceFile();
+    pr.Print();
+
+    KENG::RealmRegistry rr;
+    rr.ReadRealmFile();
+    rr.ReadOwnerFile();
+    rr.Print();
+
+    KENG::ProvinceController provCtrl;
+
+    OGL_Object* msgHover = OGL_CreateObject(OGL_GetShader("color"));
+    OGL_CreateQuadVertexFC(*msgHover->mesh);
+    TRS::T(*msgHover, {-50.F, -50.F, 0.F});
+    OGL_ONode* onodeMsgHover = OGL_CreateNode(msgHover, "province_info_hover_box");
+
     /* Hierarchy */
     OGL_AttachChild(OGL_Scene, onodeProvinceMap);
+    OGL_AttachChild(OGL_Scene, onodeMsgHover);
 
     /* Main loop, and timing */
     Uint32 lastTime = SDL_GetTicks();
@@ -66,7 +75,12 @@ int main(int, char**){
         
         /* Updates */
 
-        OGL_SetScreenBackground(0.f, 0.3f, 0.95f, 1.f);
+        std::string provName = "nullprov";
+        if ((provName = provCtrl.GetHoveredProvince(pr, onodeProvinceMap->o->mat.texture).Name()) != "nullprov") {
+            std::cout << provName << "\n";
+        }
+
+        OGL_SetScreenBackground(0.f, 0.f, 0.f, 1.f);
 
         OGL_RenderVisitChildren(OGL_Scene);
     
@@ -83,7 +97,6 @@ int main(int, char**){
     }
 
     /* Cleanup */
-    SDL_DestroyRenderer(SDL2_Rnd);
     SDL_DestroyWindow(SDL2_Win);
     SDL_Quit();
 
