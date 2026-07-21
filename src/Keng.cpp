@@ -4,22 +4,12 @@ int main(int, char**){
     /* Initialise SDL2 and OpenGL */
     SDL2_InitWin();
     OGL_InitContext(SDL2_Win);
-
     OGL_InitShaderRegistry();
 
-    /* Controller creation */
     OGL_Controller* ctrl = OGL_CreateController(5.0f, 0.1f);
-
-    /* Camera setup */
     OGL_Camera* cam = OGL_CreateCamera({0.0f, 0.0f, 50.0f}, {0, 1, 0}, 0.0f, 0.0f);
-    
-    /* Bind camera to controller */
     OGL_BindCameraToController(ctrl, cam);
-    
-    /* Bind a camera to the render view */
     OGL_BindCameraToRenderView(cam);
-    
-    /* Bind controller keys */
     OGL_BindControllerWASD2D(ctrl);
     
     /* Lightweight root object */
@@ -34,29 +24,22 @@ int main(int, char**){
     OGL_ONode* onodeProvinceMap = OGL_CreateNode(provinceMap, "map");
     TRS::S(*provinceMap, {50.0f * 1.77777778f, 50.f, 1.f});
 
+    /* Registries */
     KENG::ProvinceRegistry pr;
     pr.ReadProvinceFile();
     pr.Print();
-
     KENG::RealmRegistry rr;
     rr.ReadRealmFile();
     rr.ReadOwnerFile();
     rr.Print();
 
+    /* Controllers */
     KENG::ProvinceController provCtrl;
-
-    OGL_Object* msgHover = OGL_CreateObject(OGL_GetShader("color"));
-    OGL_CreateQuadVertexFC(*msgHover->mesh);
-    TRS::T(*msgHover, {-50.F, -50.F, 0.F});
-    OGL_ONode* onodeMsgHover = OGL_CreateNode(msgHover, "province_info_hover_box");
 
     /* Hierarchy */
     OGL_AttachChild(OGL_Scene, onodeProvinceMap);
-    OGL_AttachChild(OGL_Scene, onodeMsgHover);
 
-    /* Main loop, and timing */
     Uint32 lastTime = SDL_GetTicks();
-
     bool OGL_GameQuit = false;
     while(!OGL_GameQuit){
         Uint32 now = SDL_GetTicks();
@@ -74,7 +57,6 @@ int main(int, char**){
         
         /* Updates */
 
-        // FIXME:
         std::string provName;
         provName = provCtrl.GetHoveredProvince(pr, *onodeProvinceMap->o).Name();
 
