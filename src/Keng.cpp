@@ -38,9 +38,9 @@ int main(int, char**){
     rr.Print();
 
     /* Font */
-    unsigned int provinceHoverFont = 32;
+    unsigned int provinceHoverFontHeight = 25;
     FT_Library provinceHover_FTLib = OGL_InitFreeType();
-    FT_Face provinceHover_FTFace = OGL_LoadFont(provinceHover_FTLib, "assets/fonts/BodoniXT.ttf", provinceHoverFont);
+    FT_Face provinceHover_FTFace = OGL_LoadFont(provinceHover_FTLib, "assets/fonts/BodoniXT.ttf", provinceHoverFontHeight);
     std::map<char, OGL_Character> provinceHover_CharMap = OGL_LoadCharacters(provinceHover_FTFace);
 
     /* Controllers */
@@ -76,7 +76,7 @@ int main(int, char**){
         std::string provName;
         provName = provCtrl.GetHoveredProvince(pr, *onodeProvinceMap->o).Name();
         if (provName != "nullprov") {
-            OGL_RenderText(*provinceHoverInfo, provName.c_str(), (float)mx + 5.f, (float)my + (float)(provinceHoverFont / 2), 1.0f, {1.0f, 1.0f, 1.0f}, provinceHover_CharMap);
+            OGL_RenderText(*provinceHoverInfo, provName.c_str(), (float)mx + (float)provinceHoverFontHeight, (float)my + (float)(provinceHoverFontHeight / 2), 1.0f, {1.0f, 1.0f, 1.0f}, provinceHover_CharMap);
         }
     
         /* Swap frame buffers */
