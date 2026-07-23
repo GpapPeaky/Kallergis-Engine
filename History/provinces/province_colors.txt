@@ -154,14 +154,21 @@
 154 "Dreadfort" 235 151 193
 155 "Emberstrike" 231 214 49
 156 "Frostfire" 177 6 97
+
+
+
 157 "Gloomspire" 180 145 187
+
 158 "Hellfire" 89 228 169
+
 159 "Ironforge" 12 103 151
+
 160 "Jolund" 56 134 239
 161 "Kaldorei" 70 172 28
 162 "Lordaeron" 162 67 136
 163 "Mulgore" 182 182 158
 164 "Netherstorm" 238 112 201
+
 165 "Outland" 179 218 116
 166 "Plaguelands" 112 97 8
 167 "Quelthalas" 144 110 241
@@ -260,8 +267,11 @@
 260 "Kiljaeden" 221 218 118
 261 "Liadrin" 190 182 232
 262 "Malorne" 152 175 67
+
 263 "Nefarian" 212 45 243
+
 264 "Onu" 223 157 99
+
 265 "Perenolde" 33 105 253
 266 "Ragnaros" 7 251 44
 267 "Sargeras" 250 191 89
@@ -279,6 +289,7 @@
 279 "Elune" 48 144 253
 280 "Freya" 191 189 14
 281 "Guldan" 49 241 244
+
 282 "Hogger" 241 151 25
 283 "Illidan" 105 24 232
 284 "Jaraxxus" 3 223 204
