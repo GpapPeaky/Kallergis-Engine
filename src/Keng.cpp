@@ -16,13 +16,16 @@ int main(int, char**){
     OGL_Object* rootObj = OGL_CreateObject(OGL_GetShader("rootobj"));
     OGL_Scene = OGL_CreateNode(rootObj, "root");
     
-    /* Map creation */
-    OGL_Object* provinceMap = OGL_CreateObject(OGL_GetShader("tex"));
+    OGL_Object* provinceMap = OGL_CreateObject(OGL_GetShader("tex"));       /* Not need for an object node */
     OGL_CreateTextureQuad(*provinceMap->mesh);
     OGL_LoadBitmapToObject(*provinceMap, "History/provinces/province_map.png");
-    /* Create the object node */
-    OGL_ONode* onodeProvinceMap = OGL_CreateNode(provinceMap, "map");
-    TRS::S(*provinceMap, {50.0f * 1.77777778f, 50.f, 1.f});
+    TRS::S(*provinceMap, {50.0f * 1.777777778f, 50.f, 1.f});
+
+    OGL_Object* realmMap = OGL_CreateObject(OGL_GetShader("tex"));
+    OGL_CreateTextureQuad(*realmMap->mesh);
+    OGL_LoadBitmapToObject(*realmMap, "History/realms/mapMask.png");
+    OGL_ONode* onodeRealmMap = OGL_CreateNode(realmMap, "realm_map");
+    TRS::S(*realmMap, {50.0f * 1.77777778f, 50.f, 1.f});
 
     /* Text rendering */
     OGL_Object* provinceHoverInfo = OGL_CreateObject(OGL_GetShader("glyph"));
@@ -34,11 +37,10 @@ int main(int, char**){
     pr.Print();
     KENG::RealmRegistry rr;
     rr.ReadRealmFile();
-    rr.ReadOwnerFile();
     rr.Print();
 
     /* Font */
-    unsigned int provinceHoverFontHeight = 25;
+    unsigned int provinceHoverFontHeight = 18;
     FT_Library provinceHover_FTLib = OGL_InitFreeType();
     FT_Face provinceHover_FTFace = OGL_LoadFont(provinceHover_FTLib, "assets/fonts/BodoniXT.ttf", provinceHoverFontHeight);
     std::map<char, OGL_Character> provinceHover_CharMap = OGL_LoadCharacters(provinceHover_FTFace);
@@ -47,7 +49,7 @@ int main(int, char**){
     KENG::ProvinceController provCtrl;
 
     /* Hierarchy */
-    OGL_AttachChild(OGL_Scene, onodeProvinceMap);
+    OGL_AttachChild(OGL_Scene, onodeRealmMap);          // Rendered last?
 
     Uint32 lastTime = SDL_GetTicks();
     bool OGL_GameQuit = false;
@@ -74,7 +76,7 @@ int main(int, char**){
         OGL_RenderVisitChildren(OGL_Scene);
         
         std::string provName;
-        provName = provCtrl.GetHoveredProvince(pr, *onodeProvinceMap->o).Name();
+        provName = provCtrl.GetHoveredProvince(pr, *provinceMap).Name();
         if (provName != "nullprov") {
             OGL_RenderText(*provinceHoverInfo, provName.c_str(), (float)mx + (float)provinceHoverFontHeight, (float)my + (float)(provinceHoverFontHeight / 2), 1.0f, {1.0f, 1.0f, 1.0f}, provinceHover_CharMap);
         }
@@ -95,5 +97,5 @@ int main(int, char**){
     SDL_DestroyWindow(SDL2_Win);
     SDL_Quit();
 
-    return SUCCESS;
+    return SUCCESS; 
 }

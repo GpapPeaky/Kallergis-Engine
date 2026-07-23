@@ -1,9 +1,11 @@
 #pragma once
 
 #include "KENG_Utils.hpp"
+#include "KENG_ProvinceRegistry.hpp"
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 namespace KENG {
     class Realm {
@@ -20,10 +22,19 @@ namespace KENG {
 
             llui Id(void) const ;
 
-            ui32 Color(void);
+            ui32 Color(void) const ;
 
-            std::string Name(void);
+            std::string& Name(void);
 
-            void AssignProvinces(void); // Assign province ids, read from file
+            bool HasProvince(llui provID);      // Check if the realm own a province of specific id
+            bool HasProvince(ProvinceRegistry& pr, ui32 color);       // Check if the realm own a province of specific color
+
+            void AddProvince(llui provID);  // Add province of specific id
+            void AddProvince(ProvinceRegistry& pr, ui32 color);  // Add province of specific color
+            
+            void RemoveProvince(llui provID); // Remove province of specific id
+            void RemoveProvince(ProvinceRegistry& pr, ui32 color); // Remove province of specific color
+
+            void InitProvinces(void); // Assign province ids, read from file realms/ownership/realmName.txt
     };
 }

@@ -44,8 +44,7 @@ namespace KENG {
             // Validate RGB
             if (r < 0 || r > 255 ||
                 g < 0 || g > 255 ||
-                b < 0 || b > 255)
-            {
+                b < 0 || b > 255) {
                 Utils::LOG_RLM << "Invalid RGB value: " << line << '\n';
                 continue;
             }
@@ -57,16 +56,13 @@ namespace KENG {
             );
     
             Realm rlm{id, name, color};
+            rlm.InitProvinces(); // Read from here, initialisation
     
             colorToId.emplace(color, id);
             realms.push_back(std::move(rlm));
     
             ++id;
         }
-    }
-
-    void RealmRegistry::ReadOwnerFile(void) {
-        // TODO:
     }
 
     void RealmRegistry::Print(void) {

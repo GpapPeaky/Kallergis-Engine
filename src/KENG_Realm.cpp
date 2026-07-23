@@ -13,11 +13,61 @@ namespace KENG {
         return id;
     }
 
-    ui32 Realm::Color(void) {
+    ui32 Realm::Color(void) const {
         return color;
     }
 
-    std::string Realm::Name(void) {
+    std::string& Realm::Name(void) {
         return name;
+    }
+
+    bool Realm::HasProvince(llui provID) {
+        for (llui id : provinces) {
+            if (id == provID) return true;
+        }
+
+        return false;
+    }
+
+    bool Realm::HasProvince(ProvinceRegistry& pr, ui32 color) {
+        llui provID = pr.GetProvince(color).Id();
+
+        return HasProvince(provID);
+    }       
+
+    void Realm::AddProvince(llui provID) {
+        if (HasProvince(provID)) return; // Already has it
+
+        provinces.push_back(provID);
+    }
+
+    void Realm::AddProvince(ProvinceRegistry& pr, ui32 color) {
+        if (HasProvince(pr, color)) return; // Already has it
+        
+        llui provID = pr.GetProvince(color).Id();
+
+        provinces.push_back(provID);
+    }
+            
+    void Realm::RemoveProvince(llui provID) {
+        if (!HasProvince(provID)) return; // Doesn't have it
+
+        auto it = std::find(provinces.begin(), provinces.end(), provID);
+
+        if (it != provinces.end()) {
+            provinces.erase(it);
+        }
+    }
+
+    void Realm::RemoveProvince(ProvinceRegistry& pr, ui32 color) {
+        if (!HasProvince(pr, color)) return; // Doesn't have it
+
+        llui provID = pr.GetProvince(color).Id();
+
+        RemoveProvince(provID);
+    }
+
+    void Realm::InitProvinces(void) {
+
     }
 }
