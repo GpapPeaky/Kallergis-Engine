@@ -68,6 +68,6 @@ namespace KENG {
     }
 
     void Realm::InitProvinces(void) {
-
+        
     }
 }

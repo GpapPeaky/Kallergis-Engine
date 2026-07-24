@@ -113,13 +113,10 @@
 44 120 137  merchant_republic       "Porto Marina"
 52 140 158  bishopry                "Santa Marina"
 234 230 121 papacy                  "Papal State"
-#comp
 
 234 205 93  bishopry                "Saint Riviera"
 
-#comp
 234 205 121 bishopry                "Saint Markkus"
-#comp
 
 219 207 41  monastic_order          "Saint Erique"
 234 226 0   holy_order              "Saint Anna"
@@ -127,7 +124,6 @@
 
 96 62 92    tribe                   "Boion"
 
-#comp
 109 100 117 tribe                   "Enetezi"
 #comp
 
