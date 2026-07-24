@@ -36,5 +36,7 @@ namespace KENG {
             void RemoveProvince(ProvinceRegistry& pr, ui32 color); // Remove province of specific color
 
             void InitProvinces(void); // Assign province ids, read from file realms/ownership/realmName.txt
+
+            std::vector<llui>& Provinces(void);
     };
 }

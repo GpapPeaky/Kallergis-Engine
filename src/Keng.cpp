@@ -32,12 +32,12 @@ int main(int, char**){
     OGL_CreateTextQuad(*provinceHoverInfo->mesh);
 
     /* Registries */
-    KENG::ProvinceRegistry pr;
-    pr.ReadProvinceFile();
-    pr.Print();
-    KENG::RealmRegistry rr;
-    rr.ReadRealmFile();
-    rr.Print();
+    KENG::ProvinceRegistry preg;
+    preg.ReadProvinceFile();
+    preg.Print();
+    KENG::RealmRegistry rreg;
+    rreg.ReadRealmFile();
+    rreg.Print(preg);
 
     /* Font */
     unsigned int provinceHoverFontHeight = 18;
@@ -76,7 +76,7 @@ int main(int, char**){
         OGL_RenderVisitChildren(OGL_Scene);
         
         std::string provName;
-        provName = provCtrl.GetHoveredProvince(pr, *provinceMap).Name();
+        provName = provCtrl.GetHoveredProvince(preg, *provinceMap).Name();
         if (provName != "nullprov") {
             OGL_RenderText(*provinceHoverInfo, provName.c_str(), (float)mx + (float)provinceHoverFontHeight, (float)my + (float)(provinceHoverFontHeight / 2), 1.0f, {1.0f, 1.0f, 1.0f}, provinceHover_CharMap);
         }

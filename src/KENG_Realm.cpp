@@ -68,6 +68,34 @@ namespace KENG {
     }
 
     void Realm::InitProvinces(void) {
-        
+        std::string strippedName = name;
+        // Remove whitespaces
+        strippedName.erase(
+            std::remove(strippedName.begin(), strippedName.end(), ' '),
+            strippedName.end()
+        );
+
+        std::string path = "History/owner/" + strippedName + ".txt";
+
+        std::ifstream f(path);
+
+        if (!f.is_open()) {
+            Utils::LOG_RLM << "[Warning] No ownership file for the realm " << name << std::endl;
+            return;
+        }
+
+        provinces.clear();
+
+        llui provID;
+
+        while (f >> provID) {
+            provinces.push_back(provID);
+        }
+
+        f.close();
+    }
+
+    std::vector<llui>& Realm::Provinces(void) {
+        return provinces;
     }
 }
