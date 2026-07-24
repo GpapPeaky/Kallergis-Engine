@@ -16,5 +16,7 @@ namespace KENG {
             void ReadRealmFile(void);   // Realm creation, province assignment, AssignProvinces() function is a Realm Method
 
             void Print(ProvinceRegistry& pr); // Prints the generated entries, debug only.
+
+            std::vector<Realm>& Realms(void);
     }; // Registry
 }

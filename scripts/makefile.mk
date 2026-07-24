@@ -12,6 +12,7 @@ LDFLAGS  := -LBasic-OpenGL/ThirdParty/SDL2/lib 				\
 
 # --- Directories ---
 SRC_DIR    := src
+SHADER_DIR := shaders
 OBJ_DIR    := obj
 BIN_DIR    := bin
 ENGINE_OBJ := Basic-OpenGL/obj
@@ -20,7 +21,7 @@ ENGINE_OBJ := Basic-OpenGL/obj
 TARGET := $(BIN_DIR)/INATE.exe
 
 # --- Source and Object Files ---
-SRCS := $(wildcard *.cpp) $(wildcard $(SRC_DIR)/*.cpp)
+SRCS := $(wildcard *.cpp) $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SHADER_DIR)/*.cpp)
 OBJS := $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(notdir $(SRCS)))
 
 ALL_ENGINE_OBJS := $(wildcard $(ENGINE_OBJ)/src/*.o) \
@@ -45,6 +46,11 @@ $(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	@echo "Compiling $<..."
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# SHADER RULE
+$(OBJ_DIR)/%.o: $(SHADER_DIR)/%.cpp | $(OBJ_DIR)
 	@echo "Compiling $<..."
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

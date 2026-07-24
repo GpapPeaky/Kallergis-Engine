@@ -77,4 +77,8 @@ namespace KENG {
             }
         }
     }
+
+    std::vector<Realm>& RealmRegistry::Realms(void) {
+        return realms;
+    }
 }

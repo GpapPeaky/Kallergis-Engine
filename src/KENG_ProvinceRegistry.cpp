@@ -82,4 +82,8 @@ namespace KENG {
             Utils::LOG_PROV << prov.Id() << " " << prov.Name() << " " << prov.Color() << std::endl;
         }
     }
+
+    llui ProvinceRegistry::Count(void) {
+        return provinces.size();
+    }
 }

@@ -26,5 +26,7 @@ namespace KENG {
             Province& GetProvince(llui id);
 
             void Print(void); // Prints the generated entries, debug only.
+
+            llui Count(void); 
     };
 }
